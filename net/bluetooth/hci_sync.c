@@ -1210,7 +1210,7 @@ static int hci_disable_ext_adv_legacy_instance_sync(struct hci_dev *hdev)
 	u8 data[sizeof(*cp) + sizeof(*set) * 1];
 	u8 size;
 
-	if (!hci_dev_test_flag(hdev, HCI_LE_ADV_0))
+	if (!hci_dev_test_flag(hdev, HCI_LE_ADV))
 		return 0;
 
 	memset(data, 0, sizeof(data));

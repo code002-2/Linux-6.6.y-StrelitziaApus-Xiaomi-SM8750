@@ -272,7 +272,7 @@ int bpf_prog_dev_bound_init(struct bpf_prog *prog, union bpf_attr *attr)
 	 * Behind bpf_dev_bound_netdev_unregister() nobody would take the
 	 * program off the device, which goes once the reference is dropped.
 	 */
-	if (READ_ONCE(netdev->reg_state) == NETREG_REGISTERED)
+	if (netdev->reg_state == NETREG_REGISTERED)
 		err = __bpf_prog_dev_bound_init(prog, netdev);
 	else
 		err = -EINVAL;
