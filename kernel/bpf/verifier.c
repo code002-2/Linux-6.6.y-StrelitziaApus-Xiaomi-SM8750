@@ -20365,6 +20365,15 @@ static int check_attach_btf_id(struct bpf_verifier_env *env)
 
 	if (tgt_prog && tgt_prog->aux->tail_call_reachable)
 		tr->flags = BPF_TRAMP_F_TAIL_CALL_CTX;
+			/*
+			 * How much of the buffer of the tracepoint is used
+			 * is checked for the program that is attached to it.
+			 */
+			if (tgt_prog->type == BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE) {
+				bpf_log(log,
+					"Cannot extend a writable raw tracepoint program\n");
+				return -EINVAL;
+			}
 
 	prog->aux->dst_trampoline = tr;
 	return 0;
