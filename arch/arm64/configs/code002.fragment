@@ -172,3 +172,8 @@ CONFIG_NTFS_FS=m
 CONFIG_NTFS3_FS=m
 CONFIG_NTFS3_LZX_XPRESS=y
 CONFIG_NTFS3_FS_POSIX_ACL=y
+
+# ===== USB-C 一线通用的板载 USB Hub 驱动 =====
+# 无此驱动时 CH334 等 Hub 的复位/供电不受内核管理，
+# 连接显示器时 USB 会概率性 EPROTO(-71) 掉端口
+CONFIG_USB_ONBOARD_HUB=m

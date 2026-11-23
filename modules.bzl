@@ -136,6 +136,7 @@ _X86_64_GKI_MODULES_LIST = [
 _STRELITZIA_EXTRA_MODULES = [
     "fs/ntfs/ntfs.ko",
     "fs/ntfs3/ntfs3.ko",
+    "drivers/usb/misc/onboard_usb_hub.ko",
 ]
 
 def get_gki_modules_list(arch = None):
