@@ -10713,12 +10713,12 @@ static void dev_fetch_dstats(struct rtnl_link_stats64 *s,
 		stats = per_cpu_ptr(dstats, cpu);
 		do {
 			start = u64_stats_fetch_begin(&stats->syncp);
-			rx_packets = u64_stats_read(&stats->rx_packets);
-			rx_bytes   = u64_stats_read(&stats->rx_bytes);
-			rx_drops   = u64_stats_read(&stats->rx_drops);
-			tx_packets = u64_stats_read(&stats->tx_packets);
-			tx_bytes   = u64_stats_read(&stats->tx_bytes);
-			tx_drops   = u64_stats_read(&stats->tx_drops);
+			rx_packets = READ_ONCE(stats->rx_packets);
+			rx_bytes   = READ_ONCE(stats->rx_bytes);
+			rx_drops   = READ_ONCE(stats->rx_drops);
+			tx_packets = READ_ONCE(stats->tx_packets);
+			tx_bytes   = READ_ONCE(stats->tx_bytes);
+			tx_drops   = READ_ONCE(stats->tx_drops);
 		} while (u64_stats_fetch_retry(&stats->syncp, start));
 
 		s->rx_packets += rx_packets;
