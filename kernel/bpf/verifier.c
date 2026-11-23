@@ -20370,7 +20370,7 @@ static int check_attach_btf_id(struct bpf_verifier_env *env)
 			 * is checked for the program that is attached to it.
 			 */
 			if (tgt_prog->type == BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE) {
-				bpf_log(log,
+				bpf_log(&env->log,
 					"Cannot extend a writable raw tracepoint program\n");
 				return -EINVAL;
 			}

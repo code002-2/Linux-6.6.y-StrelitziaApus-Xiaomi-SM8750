@@ -112,6 +112,18 @@ static vm_fault_t f2fs_vm_page_mkwrite(struct vm_fault *vmf)
 
 	file_update_time(vmf->vma->vm_file);
 	filemap_invalidate_lock_shared(inode->i_mapping);
+
+	/*
+	 * mmap stores bypass the COW inode and would break atomicity. Check
+	 * under invalidate_lock: f2fs_ioc_start_atomic_write() holds it while
+	 * flushing dirty folios and setting FI_ATOMIC_FILE, so either it sees
+	 * our dirty folio and writes it back, or we see the flag.
+	 */
+	if (unlikely(f2fs_is_atomic_file(inode))) {
+		err = -EOPNOTSUPP;
+		goto out_sem;
+	}
+
 	folio_lock(folio);
 	/*
 	 * A concurrent buffered write can extend isize, so we store isize in a
@@ -177,17 +189,6 @@ static const struct vm_operations_struct f2fs_file_vm_ops = {
 	.map_pages	= filemap_map_pages,
 	.page_mkwrite	= f2fs_vm_page_mkwrite,
 };
-
-	/*
-	 * mmap stores bypass the COW inode and would break atomicity. Check
-	 * under invalidate_lock: f2fs_ioc_start_atomic_write() holds it while
-	 * flushing dirty folios and setting FI_ATOMIC_FILE, so either it sees
-	 * our dirty folio and writes it back, or we see the flag.
-	 */
-	if (unlikely(f2fs_is_atomic_file(inode))) {
-		err = -EOPNOTSUPP;
-		goto out_sem;
-	}
 
 static int get_parent_ino(struct inode *inode, nid_t *pino)
 {
