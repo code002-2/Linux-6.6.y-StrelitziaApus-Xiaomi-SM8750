@@ -428,6 +428,7 @@ static int madvise_cold_or_pageout_pte_range(pmd_t *pmd,
 
 			set_pmd_at(mm, addr, pmd, orig_pmd);
 			tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
+		cond_resched();
 		}
 
 		folio_clear_referenced(folio);
