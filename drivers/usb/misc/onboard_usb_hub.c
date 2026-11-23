@@ -263,9 +263,21 @@ static int onboard_hub_probe(struct platform_device *pdev)
 				     MAX_SUPPLIES);
 
 	for (i = 0; i < hub->pdata->num_supplies; i++)
-		hub->supplies[i].supply = supply_names[i];
+		hub->supplies[i].supply = hub->pdata->supply_names ?
+			hub->pdata->supply_names[i] : supply_names[i];
 
 	err = devm_regulator_bulk_get(dev, hub->pdata->num_supplies, hub->supplies);
+	if (err && hub->pdata->supply_names) {
+		/*
+		 * Device trees written before the chip got its own names use the
+		 * generic pair, so fall back instead of failing to probe.
+		 */
+		dev_warn(dev, "chip supplies not found, retrying with vdd/vdd2\n");
+		for (i = 0; i < hub->pdata->num_supplies; i++)
+			hub->supplies[i].supply = supply_names[i];
+		err = devm_regulator_bulk_get(dev, hub->pdata->num_supplies,
+					      hub->supplies);
+	}
 	if (err) {
 		dev_err(dev, "Failed to get regulator supplies: %d\n", err);
 		return err;

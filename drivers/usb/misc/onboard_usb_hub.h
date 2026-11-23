@@ -9,6 +9,8 @@
 struct onboard_hub_pdata {
 	unsigned long reset_us;		/* reset pulse width in us */
 	unsigned int num_supplies;	/* number of supplies */
+	/* Per-chip supply names; NULL means use the generic vdd/vdd2 pair. */
+	const char * const *supply_names;
 };
 
 static const struct onboard_hub_pdata microchip_usb424_data = {
@@ -51,6 +53,19 @@ static const struct onboard_hub_pdata vialab_vl817_data = {
 	.num_supplies = 1,
 };
 
+/*
+ * The WCH CH334/CH335 4-port USB2.0 hub needs a 14 ms reset pulse after its
+ * supplies come up; releasing reset earlier leaves the chip unconfigured and
+ * the port then dies with EPROTO (-71).
+ */
+static const char * const wch_ch334_supply_names[] = { "vdd33", "v5" };
+
+static const struct onboard_hub_pdata wch_ch334_data = {
+	.reset_us = 14000,
+	.num_supplies = 2,
+	.supply_names = wch_ch334_supply_names,
+};
+
 static const struct of_device_id onboard_hub_match[] = {
 	{ .compatible = "usb424,2412", .data = &microchip_usb424_data, },
 	{ .compatible = "usb424,2514", .data = &microchip_usb424_data, },
@@ -68,6 +83,7 @@ static const struct of_device_id onboard_hub_match[] = {
 	{ .compatible = "usbbda,5411", .data = &realtek_rts5411_data, },
 	{ .compatible = "usbbda,414", .data = &realtek_rts5411_data, },
 	{ .compatible = "usbbda,5414", .data = &realtek_rts5411_data, },
+	{ .compatible = "usb1a86,8091", .data = &wch_ch334_data, },
 	{ .compatible = "usb2109,817", .data = &vialab_vl817_data, },
 	{ .compatible = "usb2109,2817", .data = &vialab_vl817_data, },
 	{}
