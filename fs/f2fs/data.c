@@ -2642,6 +2642,13 @@ static inline bool check_inplace_update_policy(struct inode *inode,
 	if (IS_F2FS_IPU_SSR_UTIL(sbi) && f2fs_need_SSR(sbi) &&
 	    utilization(sbi) > SM_I(sbi)->min_ipu_util)
 		return true;
+	/*
+	 * rewrite low ratio compress data w/ OPU mode to avoid fragmentation.
+	 * If IO comes from compressed write path and fallback to raw write,
+	 * force out-place to prevent metadata-data inconsistency.
+	 */
+	if (f2fs_compressed_file(inode))
+		return true;
 
 	/*
 	 * IPU for rewrite async pages
