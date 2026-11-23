@@ -739,7 +739,7 @@ void wbc_attach_and_unlock_inode(struct writeback_control *wbc,
 	 * sync's cutoff, the sync's queue_io() stops there and misses the
 	 * moved ones. Exclude syncs as process_inode_switch_wbs() does.
 	 */
-	down_read(&wb->bdi->wb_switch_rwsem);
+	down_read(&wbc->wb->bdi->wb_switch_rwsem);
 	wbc->wb_lcand_bytes = 0;
 	wbc->wb_tcand_bytes = 0;
 
