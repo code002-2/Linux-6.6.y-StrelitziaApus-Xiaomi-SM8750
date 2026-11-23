@@ -733,6 +733,13 @@ void wbc_attach_and_unlock_inode(struct writeback_control *wbc,
 	wbc->wb_lcand_id = inode->i_wb_frn_winner;
 	wbc->wb_tcand_id = 0;
 	wbc->wb_bytes = 0;
+	/*
+	 * The scan moves walked inodes to the newest end of b_dirty_time,
+	 * past ones it didn't reach. If one of those was dirtied after a
+	 * sync's cutoff, the sync's queue_io() stops there and misses the
+	 * moved ones. Exclude syncs as process_inode_switch_wbs() does.
+	 */
+	down_read(&wb->bdi->wb_switch_rwsem);
 	wbc->wb_lcand_bytes = 0;
 	wbc->wb_tcand_bytes = 0;
 
@@ -755,6 +762,7 @@ EXPORT_SYMBOL_GPL(wbc_attach_and_unlock_inode);
  * wbc_detach_inode - disassociate wbc from inode and perform foreign detection
  * @wbc: writeback_control of the just finished writeback
  *
+	up_read(&wb->bdi->wb_switch_rwsem);
  * To be called after a writeback attempt of an inode finishes and undoes
  * wbc_attach_and_unlock_inode().  Can be called under any context.
  *
