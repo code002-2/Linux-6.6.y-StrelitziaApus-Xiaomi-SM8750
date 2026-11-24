@@ -245,6 +245,18 @@ void nf_reject_ip_tcphdr_put(struct sk_buff *nskb, const struct sk_buff *oldskb,
 }
 EXPORT_SYMBOL_GPL(nf_reject_ip_tcphdr_put);
 
+/*
+ * dst_metadata keeps a DST_METADATA marked dst in skb->_skb_refdst, which
+ * ip_tunnel and friends set. Those are not usable for building a reply,
+ * so treat them like a missing dst as upstream does.
+ */
+static inline bool nf_skb_valid_dst(const struct sk_buff *skb)
+{
+	const struct dst_entry *dst = skb_dst(skb);
+
+	return dst && !(dst->flags & DST_METADATA);
+}
+
 static int nf_reject_fill_skb_dst(struct sk_buff *skb_in)
 {
 	struct dst_entry *dst = NULL;
@@ -272,7 +284,7 @@ void nf_send_reset(struct net *net, struct sock *sk, struct sk_buff *oldskb,
 	if (!oth)
 		return;
 
-	if (!skb_dst(oldskb) && nf_reject_fill_skb_dst(oldskb) < 0)
+	if (!nf_skb_valid_dst(oldskb) && nf_reject_fill_skb_dst(oldskb) < 0)
 		return;
 
 	if (skb_rtable(oldskb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
@@ -345,8 +357,13 @@ void nf_send_unreach(struct sk_buff *skb_in, int code, int hook)
 	if (iph->frag_off & htons(IP_OFFSET))
 		return;
 
-	if (!skb_dst(skb_in) && nf_reject_fill_skb_dst(skb_in) < 0)
+	if (!nf_skb_valid_dst(skb_in) && nf_reject_fill_skb_dst(skb_in) < 0)
 		return;
+
+	if (hook == NF_INET_INGRESS) {
+		memset(IPCB(skb_in), 0, sizeof(*IPCB(skb_in)));
+		IPCB(skb_in)->iif = skb_in->skb_iif;
+	}
 
 	if (skb_csum_unnecessary(skb_in) ||
 	    !nf_reject_verify_csum(skb_in, dataoff, proto)) {

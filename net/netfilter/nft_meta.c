@@ -271,13 +271,26 @@ static bool nft_meta_get_eval_ifname(enum nft_meta_keys key, u32 *dest,
 }
 
 #ifdef CONFIG_IP_ROUTE_CLASSID
-static noinline bool
-nft_meta_get_eval_rtclassid(const struct sk_buff *skb, u32 *dest)
+/*
+ * As upstream: a dst carrying DST_METADATA is not a routing decision, so
+ * the route classid must not be taken from it.
+ */
+static inline bool nf_meta_valid_dst(const struct sk_buff *skb)
 {
 	const struct dst_entry *dst = skb_dst(skb);
 
-	if (!dst)
+	return dst && !(dst->flags & DST_METADATA);
+}
+
+static noinline bool
+nft_meta_get_eval_rtclassid(const struct sk_buff *skb, u32 *dest)
+{
+	const struct dst_entry *dst;
+
+	if (!nf_meta_valid_dst(skb))
 		return false;
+
+	dst = skb_dst(skb);
 
 	*dest = dst->tclassid;
 	return true;

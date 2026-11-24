@@ -5,6 +5,7 @@
 
 #include <linux/module.h>
 #include <net/ipv6.h>
+#include <net/dst.h>
 #include <net/ip6_route.h>
 #include <net/ip6_fib.h>
 #include <net/ip6_checksum.h>
@@ -280,6 +281,18 @@ void nf_reject_ip6_tcphdr_put(struct sk_buff *nskb,
 }
 EXPORT_SYMBOL_GPL(nf_reject_ip6_tcphdr_put);
 
+/*
+ * dst_metadata keeps a DST_METADATA marked dst in skb->_skb_refdst, which
+ * ip_tunnel and friends set. Those are not usable for building a reply,
+ * so treat them like a missing dst as upstream does.
+ */
+static inline bool nf_skb_valid_dst(const struct sk_buff *skb)
+{
+	const struct dst_entry *dst = skb_dst(skb);
+
+	return dst && !(dst->flags & DST_METADATA);
+}
+
 static int nf_reject6_fill_skb_dst(struct sk_buff *skb_in)
 {
 	struct dst_entry *dst = NULL;
@@ -323,7 +336,8 @@ void nf_send_reset6(struct net *net, struct sock *sk, struct sk_buff *oldskb,
 	fl6.fl6_sport = otcph->dest;
 	fl6.fl6_dport = otcph->source;
 
-	if (!skb_dst(oldskb)) {
+	if (!nf_skb_valid_dst(oldskb)) {
+		skb_dst_drop(oldskb);
 		nf_ip6_route(net, &dst, flowi6_to_flowi(&fl6), false);
 		if (!dst)
 			return;
@@ -427,8 +441,13 @@ void nf_send_unreach6(struct net *net, struct sk_buff *skb_in,
 	if (hooknum == NF_INET_LOCAL_OUT && skb_in->dev == NULL)
 		skb_in->dev = net->loopback_dev;
 
-	if (!skb_dst(skb_in) && nf_reject6_fill_skb_dst(skb_in) < 0)
+	if (!nf_skb_valid_dst(skb_in) && nf_reject6_fill_skb_dst(skb_in) < 0)
 		return;
+
+	if (hooknum == NF_INET_INGRESS) {
+		memset(IP6CB(skb_in), 0, sizeof(*IP6CB(skb_in)));
+		IP6CB(skb_in)->iif = skb_in->skb_iif;
+	}
 
 	icmpv6_send(skb_in, ICMPV6_DEST_UNREACH, code, 0);
 }
