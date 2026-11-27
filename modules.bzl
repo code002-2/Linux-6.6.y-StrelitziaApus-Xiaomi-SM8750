@@ -133,10 +133,11 @@ _X86_64_GKI_MODULES_LIST = [
 
 # buildifier: disable=unnamed-macro
 # Extra modules StrelitziaApus ships on top of the GKI list.
+# The 7.3 read-write NTFS driver and the onboard USB hub driver are built
+# into the image; ntfs3 stays a module because it shares five symbol names
+# with the new driver and both cannot be linked in at once.
 _STRELITZIA_EXTRA_MODULES = [
-    "fs/ntfs/ntfs.ko",
     "fs/ntfs3/ntfs3.ko",
-    "drivers/usb/misc/onboard_usb_hub.ko",
 ]
 
 def get_gki_modules_list(arch = None):

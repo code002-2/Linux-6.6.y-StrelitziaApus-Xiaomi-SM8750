@@ -168,7 +168,7 @@ CONFIG_STRELITZIA_SCHEDULING=y
 # ===== NTFS3：读写 Windows 磁盘（绕过 FUSE / ntfs-3g）=====
 # 主线自带的 Paragon 实现，m 形式编成独立模块，内核 Image 不变
 # 现代 fs/ntfs 驱动（取自 ACK android15-6.6，46 文件版）
-CONFIG_NTFS_FS=m
+CONFIG_NTFS_FS=y
 CONFIG_NTFS3_FS=m
 CONFIG_NTFS3_LZX_XPRESS=y
 CONFIG_NTFS3_FS_POSIX_ACL=y
@@ -176,4 +176,4 @@ CONFIG_NTFS3_FS_POSIX_ACL=y
 # ===== USB-C 一线通用的板载 USB Hub 驱动 =====
 # 无此驱动时 CH334 等 Hub 的复位/供电不受内核管理，
 # 连接显示器时 USB 会概率性 EPROTO(-71) 掉端口
-CONFIG_USB_ONBOARD_HUB=m
+CONFIG_USB_ONBOARD_HUB=y
